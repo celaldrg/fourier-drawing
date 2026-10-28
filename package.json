@@ -1,0 +1,11 @@
+{
+  "name": "fourier-drawing",
+  "version": "1.0.0",
+  "description": "Draw any closed shape with a chain of rotating circles (epicycles) built from its discrete Fourier transform.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

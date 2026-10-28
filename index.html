@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fourier Drawing</title>
+  <meta name="description" content="Draw any closed shape and watch a chain of rotating circles retrace it with the Fourier transform.">
+  <meta name="theme-color" content="#0f172a">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Fourier Drawing">
+  <meta property="og:description" content="Draw any closed shape and watch a chain of rotating circles retrace it with the Fourier transform.">
+  <meta property="og:url" content="https://celaldrg.github.io/fourier-drawing/">
+  <meta property="og:image" content="https://celaldrg.github.io/fourier-drawing/docs/screenshot.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Ccircle cx='26' cy='34' r='16' fill='none' stroke='%2394a3b8' stroke-width='3'/%3E%3Ccircle cx='40' cy='26' r='8' fill='none' stroke='%23c084fc' stroke-width='3'/%3E%3Cpath d='M26 34 L40 26 L46 20' stroke='%23e2e8f0' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='20' r='3.5' fill='%23c084fc'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1 data-i18n="app.title">Fourier Drawing</h1>
+      <p class="tagline" data-i18n="app.tagline">Any closed shape, drawn by spinning circles</p>
+    </div>
+    <div class="top-actions">
+      <button type="button" id="btn-reset" class="btn" data-i18n="header.reset" data-i18n-aria="header.resetAria">Reset</button>
+      <button type="button" id="btn-lang" class="btn btn-lang" data-i18n-aria="header.langAria" aria-label="TR: switch to Turkish">TR</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage-wrap">
+      <div class="stage" id="stage">
+        <canvas id="canvas" role="img" data-i18n-aria="stage.aria"></canvas>
+        <p class="stage-hint" id="stage-hint" hidden></p>
+        <p class="stage-stats" id="stage-stats" aria-live="polite"></p>
+      </div>
+
+      <div class="dock">
+        <div class="dock-buttons">
+          <button type="button" id="btn-play" class="btn btn-primary">Pause</button>
+          <button type="button" id="btn-draw" class="btn">Draw</button>
+          <button type="button" id="btn-panel" class="btn btn-panel" aria-expanded="false" aria-controls="panel" data-i18n="btn.controls">Controls</button>
+        </div>
+        <label class="field field-terms">
+          <span class="field-head"><span data-i18n="terms.label">Terms (K)</span><output id="terms-out"></output></span>
+          <input type="range" id="terms" min="1" max="256" step="1" value="64">
+        </label>
+      </div>
+    </section>
+
+    <aside class="panel" id="panel">
+      <section class="card">
+        <label class="field">
+          <span class="field-head"><span data-i18n="speed.label">Speed</span><output id="speed-out"></output></span>
+          <input type="range" id="speed" min="0.1" max="4" step="0.1" value="1">
+        </label>
+        <label class="field">
+          <span class="field-head"><span data-i18n="samples.label">Sample points (N)</span></span>
+          <select id="samples">
+            <option value="64">64</option>
+            <option value="128">128</option>
+            <option value="256">256</option>
+            <option value="512">512</option>
+            <option value="1024">1024</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="view.title">View</h2>
+        <label class="check"><input type="checkbox" id="show-circles" checked> <span data-i18n="view.circles">Circles and arms</span></label>
+        <label class="check"><input type="checkbox" id="show-original" checked> <span data-i18n="view.original">Original shape</span></label>
+        <h2 data-i18n="sort.title">Order of circles</h2>
+        <div class="segmented" role="group" data-i18n-aria="sort.title">
+          <button type="button" class="seg" data-sort="amplitude" data-i18n="sort.amplitude">By size</button>
+          <button type="button" class="seg" data-sort="frequency" data-i18n="sort.frequency">By frequency</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="presets.title">Shapes</h2>
+        <div class="presets" id="presets"></div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="chart.title">Amplitudes</h2>
+        <canvas id="chart" class="chart" role="img" data-i18n-aria="chart.aria"></canvas>
+      </section>
+
+      <section class="card">
+        <h2><label for="svg-input" data-i18n="svg.title">Paste SVG path</label></h2>
+        <textarea id="svg-input" rows="3" spellcheck="false" autocomplete="off" data-i18n-placeholder="svg.placeholder"></textarea>
+        <div class="row">
+          <button type="button" id="btn-svg" class="btn" data-i18n="svg.load">Load path</button>
+          <span class="note" id="svg-msg" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="share.title">Share and export</h2>
+        <div class="row wrap">
+          <button type="button" id="btn-share" class="btn" data-i18n="share.link">Copy share link</button>
+          <button type="button" id="btn-export" class="btn" data-i18n="export.svg">Export SVG</button>
+        </div>
+        <p class="note" id="share-msg" aria-live="polite"></p>
+      </section>
+
+      <section class="card keys">
+        <h2 data-i18n="keys.title">Keyboard</h2>
+        <p class="note" data-i18n="keys.text">Space play/pause · ←/→ terms (Shift ×10) · R reset · D draw</p>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    MIT · <a href="https://github.com/celaldrg/fourier-drawing" data-i18n="footer.source">Source on GitHub</a>
+  </footer>
+</body>
+</html>
